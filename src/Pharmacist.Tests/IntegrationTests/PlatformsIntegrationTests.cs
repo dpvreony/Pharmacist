@@ -6,6 +6,7 @@
 using System.Threading.Tasks;
 
 using Pharmacist.Core;
+using Pharmacist.Core.BindingModels;
 using Pharmacist.Core.ReferenceLocators;
 
 using Xunit;
@@ -36,6 +37,21 @@ namespace Pharmacist.Tests.IntegrationTests
             var referenceAssembliesLocation = ReferenceLocator.GetReferenceLocation();
 
             await ObservablesForEventGenerator.ExtractEventsFromPlatforms(sourceDirectory, string.Empty, ".received.txt", referenceAssembliesLocation, new[] { autoPlatform }, TestUtilities.GetPackageDirectory()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests to make sure that the platform tests produce valid output.
+        /// </summary>
+        /// <param name="autoPlatform">The platform to test.</param>
+        /// <returns>A task to monitor the progress.</returns>
+        [Theory]
+        [InlineData(AutoPlatform.WPF)]
+        public async Task PlatformGeneratesBindingModelCode(AutoPlatform autoPlatform)
+        {
+            var sourceDirectory = IntegrationTestHelper.GetOutputDirectory();
+            var referenceAssembliesLocation = ReferenceLocator.GetReferenceLocation();
+
+            await BindingModelGenerator.ExtractBindingModelsFromPlatforms(sourceDirectory, string.Empty, ".received.txt", referenceAssembliesLocation, new[] { autoPlatform }, TestUtilities.GetPackageDirectory()).ConfigureAwait(false);
         }
     }
 }
