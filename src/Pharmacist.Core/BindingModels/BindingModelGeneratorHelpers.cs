@@ -159,7 +159,6 @@ namespace Pharmacist.Core.BindingModels
                         UsingDirective(IdentifierName("global::System.Reactive")),
                         UsingDirective(IdentifierName("global::System.Reactive.Linq")),
                         UsingDirective(IdentifierName("global::System.Reactive.Subjects")),
-                        UsingDirective(IdentifierName("global::Pharmacist.Common"))
                     }));
 
                 await writer.WriteAsync(Environment.NewLine).ConfigureAwait(false);

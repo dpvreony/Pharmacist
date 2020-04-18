@@ -67,8 +67,8 @@ namespace Pharmacist.Core.BindingModels
             var viewForConstraint = SyntaxFactory.TypeConstraint(SyntaxFactory.ParseTypeName("ReactiveUI.IViewFor<TViewModel>"));
 
             viewConstraints = viewConstraints
-                .Add(viewForConstraint)
-                .Add(SyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint));
+                .Add(SyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint))
+                .Add(viewForConstraint);
             var viewConstraintClause = SyntaxFactory.TypeParameterConstraintClause(
                 SyntaxFactory.IdentifierName("TView"),
                 viewConstraints);
@@ -79,8 +79,8 @@ namespace Pharmacist.Core.BindingModels
 #pragma warning restore SA1129 // Do not use default value type constructor
             viewModelConstraints =
                 viewModelConstraints
-                    .Add(reactiveObjectInterfaceConstraint)
-                    .Add(SyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint));
+                    .Add(SyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint))
+                    .Add(reactiveObjectInterfaceConstraint);
             var viewModelConstraintClause = SyntaxFactory.TypeParameterConstraintClause(
                 SyntaxFactory.IdentifierName("TViewModel"),
                 viewModelConstraints);
@@ -90,7 +90,7 @@ namespace Pharmacist.Core.BindingModels
                 .WithModifiers(modifiers)
                 .WithTypeParameterList(typeParameterList)
                 .WithConstraintClauses(constraintClauses)
-                .WithLeadingTrivia(XmlSyntaxFactory.GenerateSummarySeeAlsoComment("A class that contains View Bindings for the {0} control.", controlClassFullName))
+                .WithLeadingTrivia(XmlSyntaxFactory.GenerateSummarySeeAlsoComment("A class that contains View Bindings for the {0} control.", $"global::{controlClassFullName}"))
                 .WithMembers(GetProperties(controlClassFullName, orderedTypeDeclaration.properties));
         }
 
@@ -113,7 +113,7 @@ namespace Pharmacist.Core.BindingModels
 
                 var summary = XmlSyntaxFactory.GenerateSummarySeeAlsoComment(
                     "Gets or sets the binding logic for {0}",
-                    $"{controlClassFullName}.{prop.Name}");
+                    $"global::{controlClassFullName}.{prop.Name}");
 
                 var propSyntax = GetPropertyDeclaration(prop, accessorList, summary);
 
@@ -130,7 +130,7 @@ namespace Pharmacist.Core.BindingModels
         {
             var bindingType = prop.CanSet ? "Two" : "One";
 
-            var type = ParseTypeName($"ReactiveUI.Core.ViewBindingModels.I{bindingType}WayBind<TView, {prop.ReturnType.FullName}>");
+            var type = ParseTypeName($"ReactiveUI.Core.ViewBindingModels.I{bindingType}WayBind<TView, global::{prop.ReturnType.FullName}>");
 
             var result = PropertyDeclaration(type, prop.Name)
                 .AddModifiers(Token(SyntaxKind.PublicKeyword))
