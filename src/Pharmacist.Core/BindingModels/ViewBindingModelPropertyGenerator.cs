@@ -130,7 +130,9 @@ namespace Pharmacist.Core.BindingModels
         {
             var bindingType = prop.CanSet ? "Two" : "One";
 
-            var type = ParseTypeName($"ReactiveUI.Core.ViewBindingModels.I{bindingType}WayBind<TView, global::{prop.ReturnType.FullName}>");
+            var returnType = prop.ReturnType.GenerateFullGenericName();
+
+            var type = ParseTypeName($"ReactiveUI.Core.ViewBindingModels.I{bindingType}WayBind<TView, {returnType}>");
 
             var result = PropertyDeclaration(type, prop.Name)
                 .AddModifiers(Token(SyntaxKind.PublicKeyword))
