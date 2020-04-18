@@ -90,13 +90,14 @@ namespace Pharmacist.Core.BindingModels
             AccessorDeclarationSyntax[] accessorList,
             IEnumerable<SyntaxTrivia> summary)
         {
-            // TODO: extend to support 1 or 2 way.
-            var type = SyntaxFactory.ParseTypeName($"ReactiveUI.Core.ViewBindingModels.IOneWayBind<TView, {prop.ReturnType.FullName}>");
+            var bindingType = prop.CanSet ? "Two" : "One";
 
-            var result = SyntaxFactory.PropertyDeclaration(type, prop.Name)
+            var type = ParseTypeName($"ReactiveUI.Core.ViewBindingModels.I{bindingType}WayBind<TView, {prop.ReturnType.FullName}>");
+
+            var result = PropertyDeclaration(type, prop.Name)
+                .AddModifiers(Token(SyntaxKind.PublicKeyword))
                 .WithAccessorList(
-                    SyntaxFactory.AccessorList(
-                        SyntaxFactory.List(accessorList)))
+                    AccessorList(List(accessorList)))
                 .WithLeadingTrivia(summary);
 
             return result;
