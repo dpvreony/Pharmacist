@@ -49,9 +49,47 @@ namespace Pharmacist.Core.BindingModels
             string namespaceName,
             (ITypeDefinition typeDefinition, ITypeDefinition? baseDefinition, IEnumerable<IProperty> properties) orderedTypeDeclaration)
         {
+            var viewForParameter = TypeParameter("TView");
+            var viewModelParameter = TypeParameter("TViewModel");
+#pragma warning disable SA1129 // Do not use default value type constructor
+            var sep = new SeparatedSyntaxList<TypeParameterSyntax>();
+#pragma warning restore SA1129 // Do not use default value type constructor
+            sep = sep.AddRange(new[] { viewForParameter, viewModelParameter });
+            var typeParameterList = TypeParameterList(sep);
+
             var controlClassFullName = orderedTypeDeclaration.typeDefinition.FullName;
+
+            var modifiers = TokenList(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.SealedKeyword));
+
+#pragma warning disable SA1129 // Do not use default value type constructor
+            var viewConstraints = new SeparatedSyntaxList<TypeParameterConstraintSyntax>();
+#pragma warning restore SA1129 // Do not use default value type constructor
+            var viewForConstraint = SyntaxFactory.TypeConstraint(SyntaxFactory.ParseTypeName("ReactiveUI.IViewFor<TViewModel>"));
+
+            viewConstraints = viewConstraints
+                .Add(viewForConstraint)
+                .Add(SyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint));
+            var viewConstraintClause = SyntaxFactory.TypeParameterConstraintClause(
+                SyntaxFactory.IdentifierName("TView"),
+                viewConstraints);
+
+            var reactiveObjectInterfaceConstraint = SyntaxFactory.TypeConstraint(SyntaxFactory.ParseTypeName("ReactiveUI.IReactiveObject"));
+#pragma warning disable SA1129 // Do not use default value type constructor
+            var viewModelConstraints = new SeparatedSyntaxList<TypeParameterConstraintSyntax>();
+#pragma warning restore SA1129 // Do not use default value type constructor
+            viewModelConstraints =
+                viewModelConstraints
+                    .Add(reactiveObjectInterfaceConstraint)
+                    .Add(SyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint));
+            var viewModelConstraintClause = SyntaxFactory.TypeParameterConstraintClause(
+                SyntaxFactory.IdentifierName("TViewModel"),
+                viewModelConstraints);
+            var constraintClauses = new SyntaxList<TypeParameterConstraintClauseSyntax>(new[] { viewConstraintClause, viewModelConstraintClause });
+
             return ClassDeclaration($"{orderedTypeDeclaration.typeDefinition.Name}ViewBindingModel")
-                .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.SealedKeyword)))
+                .WithModifiers(modifiers)
+                .WithTypeParameterList(typeParameterList)
+                .WithConstraintClauses(constraintClauses)
                 .WithLeadingTrivia(XmlSyntaxFactory.GenerateSummarySeeAlsoComment("A class that contains View Bindings for the {0} control.", controlClassFullName))
                 .WithMembers(GetProperties(controlClassFullName, orderedTypeDeclaration.properties));
         }
