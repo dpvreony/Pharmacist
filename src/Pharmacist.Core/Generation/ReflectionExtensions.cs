@@ -94,6 +94,33 @@ namespace Pharmacist.Core.Generation
         }
 
         /// <summary>
+        /// Get a list of non-generic public type definitions.
+        /// </summary>
+        /// <param name="compilation">The compilation to get the type definitions from.</param>
+        /// <returns>The list of type definitions.</returns>
+        public static IEnumerable<ITypeDefinition> GetPublicTypeClassesWithDerivedType(this ICompilation compilation)
+        {
+            return _publicNonGenericTypeMapping.GetOrAdd(
+                compilation,
+                comp =>
+                {
+                    var types = new HashSet<ITypeDefinition>(TypeDefinitionNameComparer.Default);
+                    var typeDefinitions = comp.GetAllTypeDefinitions().ToArray();
+                    foreach (var item in typeDefinitions)
+                    {
+                        if (item.Accessibility != Accessibility.Public || !HasDeclaringType(item, "System.Windows.Controls.Control"))
+                        {
+                            continue;
+                        }
+
+                        types.Add(item);
+                    }
+
+                    return types.ToList();
+                });
+        }
+
+        /// <summary>
         /// Gets the type that the event.
         /// </summary>
         /// <param name="eventDetails">The details about the event.</param>
@@ -194,6 +221,21 @@ namespace Pharmacist.Core.Generation
             }
 
             return (false, typeName);
+        }
+
+        private static bool HasDeclaringType(ITypeDefinition typeDefinition, string systemWindowsControlsControl)
+        {
+            var baseTypes = typeDefinition.GetNonInterfaceBaseTypes();
+
+            foreach (var baseType in baseTypes)
+            {
+                if (baseType.FullName.Equals(systemWindowsControlsControl, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

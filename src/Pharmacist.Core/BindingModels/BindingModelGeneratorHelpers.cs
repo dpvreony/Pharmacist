@@ -33,11 +33,11 @@ namespace Pharmacist.Core.BindingModels
     /// <summary>
     /// Processes the platform for binding models.
     /// </summary>
-    public static class BindingModelGenerator
+    public static class BindingModelGeneratorHelpers
     {
         private static readonly INamespaceResolver[] _resolvers =
         {
-            new PublicEventNamespaceResolver(),
+            new BindingModelNamespaceResolver(),
         };
 
         /// <summary>

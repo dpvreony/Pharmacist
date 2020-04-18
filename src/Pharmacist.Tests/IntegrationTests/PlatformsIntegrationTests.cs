@@ -51,7 +51,7 @@ namespace Pharmacist.Tests.IntegrationTests
             var sourceDirectory = IntegrationTestHelper.GetOutputDirectory();
             var referenceAssembliesLocation = ReferenceLocator.GetReferenceLocation();
 
-            await BindingModelGenerator.ExtractBindingModelsFromPlatforms(sourceDirectory, string.Empty, ".received.txt", referenceAssembliesLocation, new[] { autoPlatform }, TestUtilities.GetPackageDirectory()).ConfigureAwait(false);
+            await BindingModelGeneratorHelpers.ExtractBindingModelsFromPlatforms(sourceDirectory, string.Empty, "-binding.received.txt", referenceAssembliesLocation, new[] { autoPlatform }, TestUtilities.GetPackageDirectory()).ConfigureAwait(false);
         }
     }
 }

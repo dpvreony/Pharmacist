@@ -4,11 +4,17 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
+using System.Threading.Tasks;
 using ICSharpCode.Decompiler.TypeSystem;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Pharmacist.Core.Generation;
 using Pharmacist.Core.Generation.Resolvers;
+using Pharmacist.Core.Utilities;
 
 namespace Pharmacist.Core.BindingModels
 {
@@ -17,10 +23,108 @@ namespace Pharmacist.Core.BindingModels
     /// </summary>
     public class BindingModelNamespaceResolver : INamespaceResolver
     {
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IEnumerable<NamespaceDeclarationSyntax> Create(ICompilation compilation)
         {
-            throw new NotImplementedException();
+            var typesAndEvents = GetValidBindingModelDetails(compilation);
+
+            return GetBindingModelGenerator().Generate(typesAndEvents);
+        }
+
+        private static bool IsValidProperty(IProperty x) => x.Accessibility == Accessibility.Public
+                                                            && !x.IsExplicitInterfaceImplementation
+                                                            && !x.IsStatic;
+
+        private static IEnumerable<ITypeDefinition> GetPublicControls(ICompilation compilation)
+        {
+            return compilation.GetPublicTypeClassesWithDerivedType();
+        }
+
+        private static ITypeDefinition? GetValidBaseType(ITypeDefinition typeDefinition, ICompilation compilation)
+        {
+            var processedTypes = new HashSet<ITypeDefinition>();
+            var processingQueue = new Queue<IType>(typeDefinition.DirectBaseTypes);
+
+            while (processingQueue.Count != 0)
+            {
+                var currentType = processingQueue.Dequeue().GetRealType(compilation).GetDefinition();
+
+                if (currentType == null || currentType.Kind == TypeKind.Class || currentType.Kind == TypeKind.TypeParameter)
+                {
+                    continue;
+                }
+
+                if (processedTypes.Contains(currentType))
+                {
+                    continue;
+                }
+
+                processedTypes.Add(currentType);
+
+                processingQueue.EnqueueRange(currentType.DirectBaseTypes);
+            }
+
+            return null;
+        }
+
+        private IPropertyGenerator GetBindingModelGenerator()
+        {
+            return new ViewBindingModelPropertyGenerator();
+        }
+
+        private IEnumerable<(
+            ITypeDefinition typeHostingEvent,
+            ITypeDefinition? baseTypeDefinition,
+            IEnumerable<IProperty> events)> GetValidBindingModelDetails(ICompilation compilation)
+        {
+            var processedList = new ConcurrentDictionary<ITypeDefinition, bool>(TypeDefinitionNameComparer.Default);
+            var toProcess = new ConcurrentStack<ITypeDefinition>(GetPublicControls(compilation));
+            var output = new ConcurrentBag<(ITypeDefinition typeHostingEvent, ITypeDefinition? baseTypeDefinition, IEnumerable<IProperty> events)>();
+
+            var processing = new ITypeDefinition[Environment.ProcessorCount];
+            while (!toProcess.IsEmpty)
+            {
+                var count = toProcess.TryPopRange(processing);
+
+                var processingList = processing.Take(count);
+                Parallel.ForEach(
+                    processingList,
+                    typeDefinition =>
+                    {
+                        if (!processedList.TryAdd(typeDefinition, true))
+                        {
+                            return;
+                        }
+
+                        var validEvents = new HashSet<IProperty>();
+
+                        foreach (var currentProperty in typeDefinition.Properties)
+                        {
+                            if (!IsValidProperty(currentProperty))
+                            {
+                                continue;
+                            }
+
+                            validEvents.Add(currentProperty);
+                        }
+
+                        if (validEvents.Count == 0)
+                        {
+                            return;
+                        }
+
+                        var baseType = GetValidBaseType(typeDefinition, compilation);
+
+                        if (baseType != null)
+                        {
+                            toProcess.Push(baseType);
+                        }
+
+                        output.Add((typeDefinition, baseType, validEvents));
+                    });
+            }
+
+            return output;
         }
     }
 }
