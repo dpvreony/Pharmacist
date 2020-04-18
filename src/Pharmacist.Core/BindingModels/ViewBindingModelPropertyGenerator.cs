@@ -49,9 +49,57 @@ namespace Pharmacist.Core.BindingModels
             string namespaceName,
             (ITypeDefinition typeDefinition, ITypeDefinition? baseDefinition, IEnumerable<IProperty> properties) orderedTypeDeclaration)
         {
+            var controlClassFullName = orderedTypeDeclaration.typeDefinition.FullName;
             return ClassDeclaration($"{orderedTypeDeclaration.typeDefinition.Name}ViewBindingModel")
                 .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.SealedKeyword)))
-                .WithLeadingTrivia(XmlSyntaxFactory.GenerateSummarySeeAlsoComment("A class that contains View Bindings for the {0} control.", orderedTypeDeclaration.typeDefinition.FullName));
+                .WithLeadingTrivia(XmlSyntaxFactory.GenerateSummarySeeAlsoComment("A class that contains View Bindings for the {0} control.", controlClassFullName))
+                .WithMembers(GetProperties(controlClassFullName, orderedTypeDeclaration.properties));
+        }
+
+        private static SyntaxList<MemberDeclarationSyntax> GetProperties(
+            string controlClassFullName,
+            IEnumerable<IProperty> properties)
+        {
+            var propArray = properties.ToArray();
+            var nodes = new List<MemberDeclarationSyntax>(propArray.Length);
+
+            foreach (var prop in propArray)
+            {
+                var accessorList = new[]
+                {
+                    SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
+                        .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken)),
+                    SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
+                        .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
+                };
+
+                var summary = XmlSyntaxFactory.GenerateSummarySeeAlsoComment(
+                    "Gets or sets the binding logic for {0}",
+                    $"{controlClassFullName}.{prop.Name}");
+
+                var propSyntax = GetPropertyDeclaration(prop, accessorList, summary);
+
+                nodes.Add(propSyntax);
+            }
+
+            return new SyntaxList<MemberDeclarationSyntax>(nodes);
+        }
+
+        private static PropertyDeclarationSyntax GetPropertyDeclaration(
+            IProperty prop,
+            AccessorDeclarationSyntax[] accessorList,
+            IEnumerable<SyntaxTrivia> summary)
+        {
+            // TODO: extend to support 1 or 2 way.
+            var type = SyntaxFactory.ParseTypeName($"ReactiveUI.Core.ViewBindingModels.IOneWayBind<TView, {prop.ReturnType.FullName}>");
+
+            var result = SyntaxFactory.PropertyDeclaration(type, prop.Name)
+                .WithAccessorList(
+                    SyntaxFactory.AccessorList(
+                        SyntaxFactory.List(accessorList)))
+                .WithLeadingTrivia(summary);
+
+            return result;
         }
     }
 }
