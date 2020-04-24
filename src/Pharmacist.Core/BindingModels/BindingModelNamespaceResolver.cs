@@ -108,11 +108,6 @@ namespace Pharmacist.Core.BindingModels
                             validEvents.Add(currentProperty);
                         }
 
-                        if (validEvents.Count == 0)
-                        {
-                            return;
-                        }
-
                         var baseType = GetValidBaseType(typeDefinition, compilation);
 
                         if (baseType != null)

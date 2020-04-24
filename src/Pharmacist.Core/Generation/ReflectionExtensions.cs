@@ -108,7 +108,7 @@ namespace Pharmacist.Core.Generation
                     var typeDefinitions = comp.GetAllTypeDefinitions().ToArray();
                     foreach (var item in typeDefinitions)
                     {
-                        if (item.Accessibility != Accessibility.Public || !HasDeclaringType(item, "System.Windows.Controls.Control"))
+                        if (item.Accessibility != Accessibility.Public || !HasDeclaringType(item, "System.Windows.UIElement"))
                         {
                             continue;
                         }

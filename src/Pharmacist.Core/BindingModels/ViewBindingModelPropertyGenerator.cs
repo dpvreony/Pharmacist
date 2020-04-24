@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -14,6 +15,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Pharmacist.Core.Generation;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using TypeKind = ICSharpCode.Decompiler.TypeSystem.TypeKind;
 
 namespace Pharmacist.Core.BindingModels
 {
@@ -27,7 +29,7 @@ namespace Pharmacist.Core.BindingModels
         {
             foreach (var groupedDeclarations in values.GroupBy(x => x.typeDefinition.Namespace).OrderBy(x => x.Key))
             {
-                var namespaceName = $"ReactiveUi.ViewBindingModels.{groupedDeclarations.Key}";
+                var namespaceName = $"ReactiveUI.ViewBindingModels.{groupedDeclarations.Key}";
                 var members = new List<ClassDeclarationSyntax>();
 
                 var orderedTypeDeclarations = groupedDeclarations.OrderBy(x => x.typeDefinition.Name).ToList();
@@ -59,7 +61,7 @@ namespace Pharmacist.Core.BindingModels
 
             var controlClassFullName = orderedTypeDeclaration.typeDefinition.FullName;
 
-            var modifiers = TokenList(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.SealedKeyword));
+            var modifiers = TokenList(Token(SyntaxKind.PublicKeyword));
 
 #pragma warning disable SA1129 // Do not use default value type constructor
             var viewConstraints = new SeparatedSyntaxList<TypeParameterConstraintSyntax>();
@@ -86,7 +88,27 @@ namespace Pharmacist.Core.BindingModels
                 viewModelConstraints);
             var constraintClauses = new SyntaxList<TypeParameterConstraintClauseSyntax>(new[] { viewConstraintClause, viewModelConstraintClause });
 
-            return ClassDeclaration($"{orderedTypeDeclaration.typeDefinition.Name}ViewBindingModel")
+            var td = orderedTypeDeclaration.typeDefinition;
+
+            var classDeclaration = ClassDeclaration($"{td.Name}ViewBindingModel");
+
+            if (!td.FullName.Equals("System.Windows.UIElement", StringComparison.OrdinalIgnoreCase))
+            {
+                var baseClass = td.DirectBaseTypes.FirstOrDefault(x => x.Kind == TypeKind.Class);
+
+                var baseViewBindingModelClassName = $"global::ReactiveUI.ViewBindingModels.{baseClass.FullName}ViewBindingModel<TView, TViewModel>";
+                var baseTypeNode =
+                    SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName(baseViewBindingModelClassName));
+#pragma warning disable SA1129 // Do not use default value type constructor
+                var baseTypesList = new SeparatedSyntaxList<BaseTypeSyntax>();
+#pragma warning restore SA1129 // Do not use default value type constructor
+                baseTypesList = baseTypesList.Add(baseTypeNode);
+                var baseList = BaseList(baseTypesList);
+
+                classDeclaration = classDeclaration.WithBaseList(baseList);
+            }
+
+            return classDeclaration
                 .WithModifiers(modifiers)
                 .WithTypeParameterList(typeParameterList)
                 .WithConstraintClauses(constraintClauses)
