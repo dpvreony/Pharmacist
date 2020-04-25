@@ -150,11 +150,11 @@ namespace Pharmacist.Core.BindingModels
             AccessorDeclarationSyntax[] accessorList,
             IEnumerable<SyntaxTrivia> summary)
         {
-            var bindingType = prop.CanSet ? "Two" : "One";
+            var bindingType = prop.CanSet ? "OneOrTwo" : "One";
 
             var returnType = prop.ReturnType.GenerateFullGenericName();
 
-            var type = ParseTypeName($"ReactiveUI.Core.ViewBindingModels.I{bindingType}WayBind<TView, {returnType}>");
+            var type = ParseTypeName($"ReactiveUI.Core.ViewBindingModels.I{bindingType}WayBind<TViewModel, {returnType}>");
 
             var result = PropertyDeclaration(type, prop.Name)
                 .AddModifiers(Token(SyntaxKind.PublicKeyword))
