@@ -28,7 +28,14 @@ namespace Pharmacist.Core.BindingModels
         {
             var typesAndEvents = GetValidBindingModelDetails(compilation);
 
-            return GetBindingModelGenerator().Generate(typesAndEvents);
+            // need to look at this in long run as bit crude
+            // could create a collection to pass in and add to.
+            // 1) extract the namespace logic
+            // 2) create input list sized as number of generators * namespace count.
+            var models = GetBindingModelGenerator().Generate(typesAndEvents);
+            var helpers = GetBindingHelperGenerator().Generate(typesAndEvents);
+
+            return models.Concat(helpers);
         }
 
         private static bool IsValidProperty(IProperty x) => x.Accessibility == Accessibility.Public
@@ -70,6 +77,11 @@ namespace Pharmacist.Core.BindingModels
         private IPropertyGenerator GetBindingModelGenerator()
         {
             return new ViewBindingModelPropertyGenerator();
+        }
+
+        private IPropertyGenerator GetBindingHelperGenerator()
+        {
+            return new ViewBindingHelperGenerator();
         }
 
         private IEnumerable<(
