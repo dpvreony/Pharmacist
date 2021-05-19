@@ -45,7 +45,13 @@ namespace Pharmacist.Tests.IntegrationTests
         /// <param name="autoPlatform">The platform to test.</param>
         /// <returns>A task to monitor the progress.</returns>
         [Theory]
+        [InlineData(AutoPlatform.Winforms)]
+        [InlineData(AutoPlatform.Android)]
+        [InlineData(AutoPlatform.Mac)]
+        [InlineData(AutoPlatform.TVOS)]
+        [InlineData(AutoPlatform.UWP)]
         [InlineData(AutoPlatform.WPF)]
+        [InlineData(AutoPlatform.iOS)]
         public async Task PlatformGeneratesBindingModelCode(AutoPlatform autoPlatform)
         {
             var sourceDirectory = IntegrationTestHelper.GetOutputDirectory();
