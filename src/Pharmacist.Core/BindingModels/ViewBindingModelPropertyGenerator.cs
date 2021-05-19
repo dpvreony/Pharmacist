@@ -157,7 +157,9 @@ namespace Pharmacist.Core.BindingModels
             var type = ParseTypeName($"ReactiveUI.Core.ViewBindingModels.I{bindingType}WayBind<TViewModel, {returnType}>");
 
             var result = PropertyDeclaration(type, prop.Name)
-                .AddModifiers(Token(SyntaxKind.PublicKeyword))
+                .AddModifiers(Token(SyntaxKind.PublicKeyword));
+
+            result = result
                 .WithAccessorList(
                     AccessorList(List(accessorList)))
                 .WithLeadingTrivia(summary);

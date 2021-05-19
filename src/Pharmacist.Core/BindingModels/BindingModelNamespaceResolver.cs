@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
@@ -39,8 +40,9 @@ namespace Pharmacist.Core.BindingModels
         }
 
         private static bool IsValidProperty(IProperty x) => x.Accessibility == Accessibility.Public
-                                                            && !x.IsExplicitInterfaceImplementation
-                                                            && !x.IsStatic;
+                                                                                                      && !x.IsExplicitInterfaceImplementation
+                                                                                                      && !x.IsStatic
+                                                                                                      && !x.IsOverride;
 
         private static IEnumerable<ITypeDefinition> GetPublicControls(ICompilation compilation)
         {

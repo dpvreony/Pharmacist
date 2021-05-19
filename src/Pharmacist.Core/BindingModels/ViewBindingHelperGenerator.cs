@@ -39,11 +39,9 @@ namespace Pharmacist.Core.BindingModels
                     members.Add(GenerateClass(namespaceName, orderedTypeDeclaration));
                 }
 
-                if (members.Count > 0)
-                {
-                    yield return NamespaceDeclaration(IdentifierName(namespaceName))
-                        .WithMembers(List<MemberDeclarationSyntax>(members));
-                }
+                // return all classes even if no properties to avoid confusion with inherited types.
+                yield return NamespaceDeclaration(IdentifierName(namespaceName))
+                    .WithMembers(List<MemberDeclarationSyntax>(members));
             }
         }
 
