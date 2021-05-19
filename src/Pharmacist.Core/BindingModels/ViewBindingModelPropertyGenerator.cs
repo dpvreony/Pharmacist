@@ -92,6 +92,7 @@ namespace Pharmacist.Core.BindingModels
 
             var classDeclaration = ClassDeclaration($"{td.Name}ViewBindingModel");
 
+            #error need to change this to take the name from the platform handler.
             if (!td.FullName.Equals("System.Windows.UIElement", StringComparison.OrdinalIgnoreCase))
             {
                 var baseClass = td.DirectBaseTypes.FirstOrDefault(x => x.Kind == TypeKind.Class);
